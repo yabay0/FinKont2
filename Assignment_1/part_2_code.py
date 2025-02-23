@@ -12,24 +12,24 @@ class BachelierImpliedVolatility:
         d2 = d1 - sigma * np.sqrt(T)
         return d1, d2
 
-    def black_scholes_price(spot, strike, T, sigma, option="Call", r=0.0, q=0.0):
+    def black_scholes_price(spot, strike, T, sigma, option="Call", r=0.0):
         """Calculate the Black–Scholes price for a European option."""
         d1, d2 = BachelierImpliedVolatility._d(spot, strike, sigma, T)
         if option.lower() == "call":
-            return spot * np.exp(-q * T) * norm.cdf(d1) - strike * np.exp(-r * T) * norm.cdf(d2)
+            return spot * norm.cdf(d1) - strike * np.exp(-r * T) * norm.cdf(d2)
         elif option.lower() == "put":
-            return strike * np.exp(-r * T) * norm.cdf(-d2) - spot * np.exp(-q * T) * norm.cdf(-d1)
+            return strike * np.exp(-r * T) * norm.cdf(-d2) - spot * norm.cdf(-d1)
         else:
             raise ValueError("Option type must be either 'Call' or 'Put'.")
 
-    def black_scholes_implied_vol(obs_price, spot, strike, T, r, q, sigma_bach, option="Call", low_vol=1e-6, high_vol=10.0):
+    def black_scholes_implied_vol(obs_price, spot, strike, T, r, sigma_bach, option="Call", low_vol=1e-6, high_vol=10.0):
         """Calculate the Black–Scholes implied volatility.
         
         It solves for sigma_bs such that:
-            BS(spot, strike, T, sigma_bs, option, r, q) = Bach(spot, strike, T, sigma_bach)
+            BS(spot, strike, T, sigma_bs, option, r) = Bach(spot, strike, T, sigma_bach)
         """
         def difference(sigma_bs):
-            return (BachelierImpliedVolatility.black_scholes_price(spot, strike, T, sigma_bs, option, r, q)
+            return (BachelierImpliedVolatility.black_scholes_price(spot, strike, T, sigma_bs, option, r)
                     - BachelierImpliedVolatility.bachelier_price(spot, strike, T, sigma_bach))
         return brentq(difference, low_vol, high_vol)
 
@@ -44,13 +44,13 @@ class BachelierImpliedVolatility:
         vols = np.array([
             BachelierImpliedVolatility.black_scholes_implied_vol(
                 BachelierImpliedVolatility.bachelier_price(S0, k, T, sigma_bach),
-                S0, k, T, r, 0.0, sigma_bach, option
+                S0, k, T, r, sigma_bach, option
             ) for k in strikes
         ])
         
         atm_strike = S0
         atm_price = BachelierImpliedVolatility.bachelier_price(S0, atm_strike, T, sigma_bach)
-        atm_vol = BachelierImpliedVolatility.black_scholes_implied_vol(atm_price, S0, atm_strike, T, r, 0.0, sigma_bach, option)
+        atm_vol = BachelierImpliedVolatility.black_scholes_implied_vol(atm_price, S0, atm_strike, T, r, sigma_bach, option)
     
         plt.style.use('ggplot')
         plt.figure(figsize=(10, 6))
