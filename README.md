@@ -1,4 +1,4 @@
-# Continuous Time Finance 2 (FinKont2), University of Copenhagen
+## Continuous Time Finance 2 (FinKont2), University of Copenhagen
 
 This repository contains the solutions and code for the three mandatory assignments for the course:
 
